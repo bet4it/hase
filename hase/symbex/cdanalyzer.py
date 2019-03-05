@@ -1,3 +1,6 @@
+import os.path
+from pathlib import Path
+
 from typing import Any, Dict, List, Optional, Tuple
 
 from pygdbmi.gdbcontroller import GdbController
@@ -7,23 +10,21 @@ from ..pwn_wrapper import ELF, Coredump
 
 class CoredumpGDB:
     def __init__(
-        self, elf: ELF, coredump: Coredump, lib_opts: Dict[str, Dict[str, int]]
+        self, elf: ELF, coredump: Coredump, sysroot: Path
     ) -> None:
         self.coredump = coredump
         self.elf = elf
         self.corefile = self.coredump.file.name
         self.execfile = self.elf.file.name
         self.gdb = GdbController(gdb_args=["--quiet", "--interpreter=mi2"])
-        self.lib_opts = lib_opts
+        self.sysroot = sysroot
         self.get_response()
         self.setup_gdb()
 
     def setup_gdb(self) -> None:
         self.write_request("file {}".format(self.execfile))
         self.write_request("core-file {}".format(self.corefile))
-        for path, value in self.lib_opts.items():
-            self.write_request("add-symbol-file {} {}".format(path, value["base_addr"]))
-            self.write_request("y")
+        self.write_request("set sysroot {}".format(self.sysroot))
 
     def get_response(self) -> List[Dict[str, Any]]:
         resp = []  # type: List[Dict[str, Any]]
@@ -160,11 +161,11 @@ class CoredumpGDB:
 
 class CoredumpAnalyzer:
     def __init__(
-        self, elf: ELF, coredump: Coredump, lib_opts: Dict[str, Dict[str, int]]
+        self, elf: ELF, coredump: Coredump, sysroot: Path
     ) -> None:
         self.coredump = coredump
         self.elf = elf
-        self.gdb = CoredumpGDB(elf, coredump, lib_opts)
+        self.gdb = CoredumpGDB(elf, coredump, sysroot)
         self.backtrace = self.gdb.backtrace()
         self.argc = self.coredump.argc
         self.argv = [self.read_argv(i) for i in range(self.argc)]

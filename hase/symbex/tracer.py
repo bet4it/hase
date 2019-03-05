@@ -16,7 +16,7 @@ from ..errors import HaseError
 from ..loader import Loader
 from ..progress_log import ProgressLog
 from ..pt import Instruction, InstructionClass
-from ..pwn_wrapper import ELF, Coredump, Mapping
+from ..pwn_wrapper import ELF, Coredump
 from .cdanalyzer import CoredumpAnalyzer
 from .filter import FilterTrace
 from .hook import setup_project_hook
@@ -85,6 +85,7 @@ class Tracer:
         trace: List[Instruction],
         coredump: Coredump,
         loader: Loader,
+        sysroot: Path,
         name: str = "(unamed)",
     ) -> None:
         self.name = name
@@ -106,7 +107,7 @@ class Tracer:
         main = elf.symbols.get("main")
 
         self.cdanalyzer = CoredumpAnalyzer(
-            elf, self.coredump, self.loader.load_options()["lib_opts"]
+            elf, self.coredump, sysroot
         )
 
         for (idx, event) in enumerate(self.trace):

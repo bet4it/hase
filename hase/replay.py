@@ -95,7 +95,7 @@ def create_tracer(report: str, archive_root: Path) -> Tracer:
     loader = Loader(executable, coredump.mappings, sysroot, vdso_x64)
     trace = decode_trace(manifest, loader)
 
-    return Tracer(executable, trace, coredump, loader, name=report)
+    return Tracer(executable, trace, coredump, loader, sysroot, name=report)
 
 
 class Replay:
